@@ -478,13 +478,19 @@ description: |
 
 本Skill支持通过MCP server从490份直播文字稿的向量索引中语义检索。配置方法：
 
-### 1. 构建向量索引
+### 1. 安装依赖
+
+向量索引文件 `tools/vector_index.json`（84MB，base64_float16格式）已随仓库提供，无需重新构建。只需安装运行依赖：
 
 ```bash
 cd /path/to/hu-chenfeng-skill
 python3 -m venv .venv
 source .venv/bin/activate
 pip install fastembed numpy
+```
+
+如需重新构建索引（可选）：
+```bash
 python3 tools/build_index.py /path/to/HuChenFeng
 ```
 

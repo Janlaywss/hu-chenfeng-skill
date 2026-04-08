@@ -16,7 +16,9 @@
 }
 """
 
+import base64
 import json
+import struct
 import sys
 from pathlib import Path
 
@@ -27,11 +29,24 @@ _index = None
 _model = None
 
 
+def decode_embedding(emb, fmt: str = None):
+    """解码embedding，支持base64_float16和原始list两种格式。"""
+    if fmt == "base64_float16" and isinstance(emb, str):
+        binary = base64.b64decode(emb)
+        return list(struct.unpack(f'{len(binary)//2}e', binary))
+    return emb
+
+
 def get_index():
     global _index
     if _index is None:
         with open(INDEX_PATH, "r", encoding="utf-8") as f:
             _index = json.load(f)
+        # 预解码所有embedding
+        fmt = _index.get("embedding_format")
+        if fmt:
+            for c in _index["chunks"]:
+                c["embedding"] = decode_embedding(c["embedding"], fmt)
     return _index
 
 

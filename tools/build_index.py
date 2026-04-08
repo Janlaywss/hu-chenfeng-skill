@@ -9,9 +9,11 @@
     tools/vector_index.json  — 向量索引文件
 """
 
+import base64
 import json
 import os
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -121,26 +123,35 @@ def build_embeddings(chunks: list[dict], model_name: str = "BAAI/bge-small-zh-v1
 
 
 def save_index(chunks: list[dict], output_path: str):
-    """保存向量索引。"""
-    # 分离元数据和向量以减小文件体积
+    """保存向量索引（base64_float16紧凑格式）。"""
     index = {
         "model": "BAAI/bge-small-zh-v1.5",
         "dimension": len(chunks[0]["embedding"]) if chunks else 0,
+        "embedding_format": "base64_float16",
         "count": len(chunks),
         "chunks": []
     }
 
     for c in chunks:
+        # float64 -> float16 + base64 编码，大幅减小体积
+        emb = c["embedding"]
+        binary = struct.pack(f'{len(emb)}e', *emb)
+        emb_b64 = base64.b64encode(binary).decode('ascii')
+
+        text = c["text"]
+        if len(text) > 1200:
+            text = text[:1200]
+
         index["chunks"].append({
             "id": c["id"],
-            "text": c["text"],
+            "text": text,
             "date": c["date"],
             "source": c["source"],
-            "embedding": c["embedding"],
+            "embedding": emb_b64,
         })
 
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(index, f, ensure_ascii=False)
+        json.dump(index, f, ensure_ascii=False, separators=(',', ':'))
 
     size_mb = os.path.getsize(output_path) / 1024 / 1024
     print(f"索引已保存: {output_path} ({size_mb:.1f} MB, {len(chunks)} 个块)")

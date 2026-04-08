@@ -241,18 +241,17 @@ huchenfeng-skill/
 
 ### 向量检索配置（可选）
 
+向量索引 `tools/vector_index.json`（84MB）已随仓库提供，无需重新构建。
+
 ```bash
-# 1. 安装依赖
+# 1. 安装运行依赖
 python3 -m venv .venv && source .venv/bin/activate
 pip install fastembed numpy
 
-# 2. 构建向量索引（需要 HuChenFeng 直播文字稿仓库）
-python3 tools/build_index.py /path/to/HuChenFeng
-
-# 3. 命令行搜索测试
+# 2. 命令行搜索测试
 python3 tools/search.py "苹果人和安卓人的区别"
 
-# 4. 配置 Claude Code MCP（在 ~/.claude/settings.json 中添加）
+# 3. 配置 Claude Code MCP（在 ~/.claude/settings.json 中添加）
 # "mcpServers": {
 #   "huchenfeng-search": {
 #     "command": "/path/to/.venv/bin/python3",
@@ -260,6 +259,9 @@ python3 tools/search.py "苹果人和安卓人的区别"
 #     "cwd": "/path/to/hu-chenfeng-skill"
 #   }
 # }
+
+# 4.（可选）重新构建索引
+# python3 tools/build_index.py /path/to/HuChenFeng
 ```
 
 ---

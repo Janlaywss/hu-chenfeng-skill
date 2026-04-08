@@ -9,7 +9,9 @@
 """
 
 import argparse
+import base64
 import json
+import struct
 import sys
 from pathlib import Path
 
@@ -23,10 +25,24 @@ def cosine_similarity(a, b):
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
 
 
+def decode_embedding(emb, fmt: str = None):
+    """解码embedding，支持base64_float16和原始list两种格式。"""
+    if fmt == "base64_float16" and isinstance(emb, str):
+        binary = base64.b64decode(emb)
+        return list(struct.unpack(f'{len(binary)//2}e', binary))
+    return emb
+
+
 def load_index(index_path: str) -> dict:
     """加载向量索引。"""
     with open(index_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        index = json.load(f)
+    # 预解码所有embedding
+    fmt = index.get("embedding_format")
+    if fmt:
+        for c in index["chunks"]:
+            c["embedding"] = decode_embedding(c["embedding"], fmt)
+    return index
 
 
 def search(query: str, index: dict, top_k: int = 5, date_from: str = None, date_to: str = None, speaker: str = None) -> list[dict]:
